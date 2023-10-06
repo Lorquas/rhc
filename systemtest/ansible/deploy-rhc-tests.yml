@@ -1,0 +1,102 @@
+- name: "Prepare a system for RHC Tests"
+  hosts: all
+  gather_facts: no
+
+  environment:
+    REQUESTS_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
+    GIT_SSL_NO_VERIFY: true
+
+  pre_tasks:
+    - name: Install Python3 in the system 
+      raw: yum -y install python3
+    
+  roles:
+    #- ca-crt
+    
+  vars:
+    workdir: /root/csi-client-tools
+      
+  tasks:
+    - name: install important packages
+      package:
+        name:
+          - git
+          - rsync
+          - firefox
+          - tmux
+          - zip
+          - tar
+        state: present
+
+    # - name: Install Development Environment
+    #   command: yum -y groupinstall 'Development Tools'
+    
+    - name: Install Development Environment
+      shell: >-
+        # yum group mark-install "Development Tools"
+        # yum group mark-convert "Development Tools"
+        yum -y groupinstall 'Development Tools'
+
+    - name: Prepare configuration for rhc
+      block:
+        - name: install rhc package
+          package:
+            name: rhc
+            state: present
+          tags:
+            - rhc
+            
+        # - name: update rhc config file
+        #   ini_file:
+        #     path: /etc/rhc/config.toml
+        #     section: ""
+        #     option: broker
+        #     value: '[ "tls://connect.cloud.stage.redhat.com:8883",]'
+
+        #     # cert-file = "/etc/pki/consumer/cert.pem"
+        #     # key-file = "/etc/pki/consumer/key.pem"
+        #     # log-level = "trace"
+
+        #   tags:
+        #     - rhc
+
+    - name: workdir for all tests
+      file:
+        path: "{{ workdir }}"
+        state: directory
+        
+    - name: .env with DYNACONF variables
+      copy:
+        content: |-
+          CSI_CLIENT_TOOLS_VAULT_LOADER_ENABLED=true
+          CSI_CLIENT_TOOLS_VAULT_URL="https://vault.devshift.net/"
+          CSI_CLIENT_TOOLS_VAULT_VERIFY=true
+          CSI_CLIENT_TOOLS_VAULT_MOUNT_POINT=csi-client-tools"
+          CSI_CLIENT_TOOLS_VAULT_OIDC_AUTH="1"
+          CSI_CLIENT_TOOLS_VAULT_OIDC_HEADLESS="1"
+        mode: 0644
+        dest: "{{ workdir }}/.env"
+
+    - name: pytest.ini
+      copy:
+        content: |-
+          [pytest]
+          addopts = "-srxv -vvv --capture=sys"
+        mode: 0644
+        dest: "{{ workdir }}/pytest.ini"
+
+    - name: create and activate a virtual environment
+      shell:
+        cmd: |-
+          python3 -m venv env 
+          source ./env/bin/activate
+          pip install --upgrade pip setuptools setuptools_scm wheel ipython pdbpp
+          pip config set global.cert "/etc/pki/tls/certs/ca-bundle.crt"
+          deactivate
+        chdir: "{{ workdir }}"
+
+    - name: Install a repo rhc in the tested machine
+      git:
+        repo: https://github.com/Lorquas/rhc.git
+        dest: "{{ workdir }}/rhc"
+        version: "packit"
