@@ -1,8 +1,8 @@
 import sh
 import logging
 
-def show_rhcd_service_status():
-    sh.systemctl("status rhcd".split())
+def rhcd_service_status():
+    return sh.systemctl("status rhcd".split())
 
 def rhcd_service_is_active():
     try:

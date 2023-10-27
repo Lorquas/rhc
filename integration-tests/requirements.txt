@@ -1,1 +1,3 @@
 pytest-subtests
+jmespath
+sh
