@@ -1,3 +1,5 @@
 pytest-subtests
 jmespath
 sh
+toml
+funcy
