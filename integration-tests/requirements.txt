@@ -3,3 +3,8 @@ jmespath
 sh
 toml
 funcy
+
+pytest
+packaging
+
+git+https://github.com/ptoscano/pytest-client-tools@main
