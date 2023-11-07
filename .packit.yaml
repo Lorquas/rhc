@@ -1,5 +1,7 @@
+---
 # Default packit instance is a prod and only this is used
-# stg instance is present for testing new packit features in forked repositories where stg is installed.
+# stg instance is present for testing new packit features
+# in forked repositories where stg is installed.
 packit_instances: ["prod"]
 upstream_project_url: https://github.com/Lorquas/rhc
 specfile_path: rhc.spec
@@ -20,7 +22,7 @@ jobs:
     trigger: pull_request
     targets:
       - centos-stream-9-x86_64
-#      - fedora-latest-stable
+      # - fedora-latest-stable
 
   - job: tests
     trigger: pull_request
@@ -29,7 +31,7 @@ jobs:
     targets:
       # https://packit.dev/docs/configuration/#aliases
       - centos-stream-9-x86_64
-#      - fedora-latest-stable
+      # - fedora-latest-stable
     # manual_trigger: true
     labels:
       - unit

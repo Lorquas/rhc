@@ -62,7 +62,8 @@ def set_rhc_tags():
     def _wrapper(tags: dict):
         # save the original file before
         if os.path.isfile(config_path):
-            logging.info(f'{config_path} exists. saved to a file {backup_path}')
+            logging.info(
+                f'{config_path} exists. saved to a file {backup_path}')
             the_config_file_exists = True
             shutil.move(config_path, backup_path)
         with open("/etc/rhc/tags.toml", "w") as f:

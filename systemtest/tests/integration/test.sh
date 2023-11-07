@@ -2,7 +2,7 @@
 set -eu
 set -x
 
-. /etc/os-release 
+. /etc/os-release
 VERSION_MAJOR=$(echo $VERSION_ID | cut -d. -f 1)
 case "${ID}" in
   rhel)

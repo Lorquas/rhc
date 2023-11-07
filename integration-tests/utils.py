@@ -1,5 +1,4 @@
 import sh
-import logging
 
 
 def rhcd_service_status():
