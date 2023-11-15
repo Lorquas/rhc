@@ -1,6 +1,4 @@
-import logging
 import jmespath
-import json
 import re
 import sh
 import os
@@ -26,7 +24,8 @@ def test_rhc_fetch_from_inventory(external_candlepin,
 
     machine_id = open("/etc/insights-client/machine-id", "rt").read().strip()
     data = fetch_from_inventory(insights_id=machine_id)
-    inventory_record = jmespath.search(f"results[?insights_id=='{machine_id}'] | [0]", data)
+    inventory_record = jmespath.search(
+        f"results[?insights_id=='{machine_id}'] | [0]", data)
 
     with subtests.test(msg="Insights info in inventory"):
         assert machine_id == inventory_record.get('insights_id'), \
@@ -44,7 +43,8 @@ def test_rhc_fetch_from_inventory(external_candlepin,
     output = subscription_manager("identity")
 
     def parse_output(output):
-        data = dict([re.split(r': +', line) for line in output.splitlines() if re.search(r"[^:]+: +", line)])
+        data = dict([re.split(r': +', line)
+                    for line in output.splitlines() if re.search(r"[^:]+: +", line)])
         return data
 
     with subtests.test(msg="Subscription Management info in inventory"):
@@ -59,7 +59,8 @@ def test_rhc_tags_in_inventory(external_candlepin, test_config, fetch_from_inven
                                set_rhc_tags, subtests):
     assert not rhc.is_registered
 
-    test_tags = {"uptime": "99.999", "production": "true", "region": "us-east-1"}
+    test_tags = {"uptime": "99.999",
+                 "production": "true", "region": "us-east-1"}
     set_rhc_tags(test_tags)
 
     candlepin_config = partial(test_config.get, "candlepin")
@@ -76,17 +77,19 @@ def test_rhc_tags_in_inventory(external_candlepin, test_config, fetch_from_inven
 
     machine_id = open("/etc/insights-client/machine-id", "rt").read().strip()
     data = fetch_from_inventory(insights_id=machine_id)
-    inventory_record = jmespath.search(f"results[?insights_id=='{machine_id}'] | [0]", data)
+    inventory_record = jmespath.search(
+        f"results[?insights_id=='{machine_id}'] | [0]", data)
     assert "id" in inventory_record, \
         "a key 'id' is a mandatory in inventory record"
     host_id = inventory_record['id'].strip()
     response = fetch_tags_from_inventory(host_id)
     """
-    {'total': 1, 'count': 1, 'page': 1, 'per_page': 50, 
-     'results': {'eb4f0dd6-60df-4e3c-82a6-d05bccc0a12e': [{'namespace': 'rhc_client', 'key': 'region', 'value': 'us-east-1'}, 
-                                                          {'namespace': 'rhc_client', 'key': 'uptime', 'value': '99.999'}, 
+    {'total': 1, 'count': 1, 'page': 1, 'per_page': 50,
+     'results': {'eb4f0dd6-60df-4e3c-82a6-d05bccc0a12e': [{'namespace': 'rhc_client', 'key': 'region', 'value': 'us-east-1'},
+                                                          {'namespace': 'rhc_client', 'key': 'uptime', 'value': '99.999'},
                                                           {'namespace': 'rhc_client', 'key': 'production', 'value': 'true'}]}}
     """
     tags_in_inventory = funcy.get_in(response, ['results', host_id])
-    tags = dict([(item['key'].strip(), item['value'].strip()) for item in tags_in_inventory])
+    tags = dict([(item['key'].strip(), item['value'].strip())
+                for item in tags_in_inventory])
     assert test_tags == tags, "Tags returned from api should be the same as the ones in /etc/rhc/tags.toml"

@@ -25,7 +25,7 @@ curl https://cert.console.redhat.com/api/inventory/v1/hosts?insights_id=<insight
 """
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def fetch_from_inventory(test_config):
     def _wrapper(insights_id):
         hostname = test_config.get("console", "host")
@@ -39,7 +39,7 @@ def fetch_from_inventory(test_config):
     yield _wrapper
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def fetch_tags_from_inventory(test_config):
     def _wrapper(host_id, params=None):
         hostname = test_config.get("console", "host")
@@ -52,7 +52,7 @@ def fetch_tags_from_inventory(test_config):
         data = json.loads(response)
         return data
 
-    return _wrapper
+    yield _wrapper
 
 
 @pytest.fixture
@@ -73,7 +73,8 @@ def set_rhc_tags():
     def _wrapper(tags: dict):
         # save the original file before
         if os.path.isfile(config_path):
-            logging.info(f'{config_path} exists. saved to a file {backup_path}')
+            logging.info(
+                f'{config_path} exists. saved to a file {backup_path}')
             the_config_file_exists = True
             shutil.move(config_path, backup_path)
         with open("/etc/rhc/tags.toml", "w") as f:

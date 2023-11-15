@@ -2,7 +2,7 @@
 set -eu
 set -x
 
-. /etc/os-release 
+. /etc/os-release
 VERSION_MAJOR=$(echo $VERSION_ID | cut -d. -f 1)
 case "${ID}" in
   rhel)
@@ -26,6 +26,7 @@ dnf --setopt install_weak_deps=False install -y \
 python3 -m venv venv
 # shellcheck disable=SC1091
 . venv/bin/activate
-pip install git+https://github.com/ptoscano/pytest-client-tools@main
+
+pip install -r integration-tests/requirements.txt
 
 pytest -v integration-tests
