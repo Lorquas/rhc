@@ -14,7 +14,7 @@ curl https://cert.console.redhat.com/api/inventory/v1/hosts?insights_id=<insight
 """
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def fetch_from_inventory(test_config):
     def _wrapper(insights_id):
         hostname = test_config.get("console", "host")
@@ -28,7 +28,7 @@ def fetch_from_inventory(test_config):
     yield _wrapper
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def fetch_tags_from_inventory(test_config):
     def _wrapper(host_id, params=None):
         hostname = test_config.get("console", "host")
@@ -41,7 +41,7 @@ def fetch_tags_from_inventory(test_config):
         data = json.loads(response)
         return data
 
-    return _wrapper
+    yield _wrapper
 
 
 @pytest.fixture
