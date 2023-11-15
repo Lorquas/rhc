@@ -3,7 +3,8 @@ jmespath
 sh
 toml
 funcy
-
+paho-mqtt
+attr
 pytest
 packaging
 

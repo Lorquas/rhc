@@ -5,6 +5,17 @@ import json
 import os
 import toml
 import shutil
+from dynaconf import Dynaconf
+
+@pytest.fixture
+def settings():
+    yield Dynaconf(
+        envvar_prefix = "CSI_CLIENT_TOOLS",
+        settings_files=["settings.toml", ".secrets.yaml"],
+        environments=True,
+        load_dotenv=True,
+    )
+
 
 """
 curl https://cert.console.redhat.com/api/inventory/v1/hosts?insights_id=<insights-client/machine_id> \
@@ -77,3 +88,8 @@ def set_rhc_tags():
     else:
         if os.path.isfile(config_path):
             os.remove(config_path)
+
+
+@pytest.fixture(scope="session")
+def mqtt_client(test_config):
+    pass
