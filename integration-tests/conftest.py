@@ -90,7 +90,3 @@ def set_rhc_tags():
         if os.path.isfile(config_path):
             os.remove(config_path)
 
-
-@pytest.fixture(scope="session")
-def mqtt_client(test_config):
-    pass
