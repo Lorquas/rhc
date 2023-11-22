@@ -7,10 +7,11 @@ import toml
 import shutil
 from dynaconf import Dynaconf
 
+
 @pytest.fixture
 def settings():
     yield Dynaconf(
-        envvar_prefix = "CSI_CLIENT_TOOLS",
+        envvar_prefix="CSI_CLIENT_TOOLS",
         settings_files=["settings.toml", ".secrets.yaml"],
         environments=True,
         load_dotenv=True,
@@ -72,6 +73,7 @@ def set_rhc_tags():
 
     def _wrapper(tags: dict):
         # save the original file before
+        global the_config_file_exists
         if os.path.isfile(config_path):
             logging.info(
                 f'{config_path} exists. saved to a file {backup_path}')
@@ -89,4 +91,3 @@ def set_rhc_tags():
     else:
         if os.path.isfile(config_path):
             os.remove(config_path)
-

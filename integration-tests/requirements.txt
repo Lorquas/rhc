@@ -7,5 +7,5 @@ paho-mqtt
 attr
 pytest
 packaging
-
+pre-commit
 git+https://github.com/ptoscano/pytest-client-tools@main

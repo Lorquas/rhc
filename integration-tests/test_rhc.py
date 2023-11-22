@@ -2,13 +2,15 @@ import logging
 from packaging import version
 from functools import partial
 
-"""
-# rhc --version
-  rhc version 0.2.4
-"""
-
 
 def test_version(rhc, subtests):
+    """
+    # rhc --version
+    rhc version 0.2.4
+
+    The application should provide a version number of the application.
+    The version number complies with https://packaging.python.org/en/latest/specifications/version-specifiers/
+    """
     with subtests.test("RHC version"):
         proc = rhc.run("--version")
         assert b"rhc version" in proc.stdout
@@ -19,20 +21,20 @@ def test_version(rhc, subtests):
         assert isinstance(rhc_version, version.Version) is True
 
 
-"""
-# rhc connect
-... it will connect a system to Red Hat services
-... it will prompt for username and password
-... it will inform a user about connection progress
-
-
-# rhc disconnect
-... it will disconnect from all Red Hat services
-... it will inform a user how it goes
-"""
-
-
 def test_rhc_connect_disconnect(external_candlepin, test_config, rhc, subtests):
+    """
+    An application allows use to connect/disconnect the actual system to/from the main service.
+
+    # rhc connect
+    ... it will connect a system to Red Hat services
+    ... it will prompt for username and password
+    ... it will inform a user about connection progress
+
+
+    # rhc disconnect
+    ... it will disconnect from all Red Hat services
+    ... it will inform a user how it goes
+    """
     assert not rhc.is_registered
     candlepin_config = partial(test_config.get, "candlepin")
     with subtests.test(msg="RHC connect"):
@@ -49,18 +51,18 @@ def test_rhc_connect_disconnect(external_candlepin, test_config, rhc, subtests):
         proc_stdout = proc.stdout.decode()
         logging.info(f'result of disconnect task: {proc.stdout}')
         assert not rhc.is_registered
-        assert "Disconnected from Red Hat Subsription Management", \
+        assert "Disconnected from Red Hat Subsription Management" in proc_stdout, \
             "The application should inform a system is disconnected from Red Hat Subscription Management"
-        assert "Disconnected from Red Hat Insights", \
+        assert "Disconnected from Red Hat Insights" in proc_stdout, \
             "The application should inform a system is disconnected from Red Hat Insights"
 
 
-"""
-The application handles a case when a user provides wrong credentials.
-"""
-
-
 def test_rhc_connect_with_wrong_credentials(any_candlepin, test_config, rhc, subtests):
+    """
+    The application handles a case when a user provides wrong credentials.
+    The application should help a user to solve this mistake.
+    It prints a helpful message to do so.
+    """
     assert not rhc.is_registered
     candlepin_config = partial(test_config.get, "candlepin")
     with subtests.test(msg="Wrong password"):
@@ -94,15 +96,14 @@ def test_rhc_connect_with_wrong_credentials(any_candlepin, test_config, rhc, sub
             "No traceback appears in an application response"
 
 
-"""
-The application handles a case when a system is already connected to Red Hat services.
-"""
-
-
 def test_rhc_connect_when_connected(any_candlepin, test_config, rhc, subtests):
+    """
+    The application handles a case when a system is already connected to Red Hat services.
+    There is no error message or traceback in an application reponse.
+    """
     assert not rhc.is_registered
     candlepin_config = partial(test_config.get, "candlepin")
-    proc_01 = rhc.connect(
+    rhc.connect(
         username=candlepin_config("username"),
         password=candlepin_config("password"),
     )
@@ -112,20 +113,21 @@ def test_rhc_connect_when_connected(any_candlepin, test_config, rhc, subtests):
     )
     logging.info(f'result of the second connect: {proc_02.stdout}')
     proc_02_stdout = proc_02.stdout.decode()
+    proc_02_stderr = proc_02.stderr.decode()
     assert "This might take a few seconds." in proc_02_stdout, \
         "Application should inform about an activation progress"
     assert "This system is already connected to Red Hat Subscription Management" in proc_02_stdout, \
         "Application should inform about connecting to Red Hat Subscription Management"
     assert "Enabled console.redhat.com services" in proc_02_stdout, \
         "Application should inform about console.redhat.com service"
-
-
-"""
-The applications provides a status of connection to Red Hat services.
-"""
+    assert "Traceback" not in proc_02_stdout + proc_02_stderr, \
+        "No traceback appears in an application response"
 
 
 def test_rhc_status(rhc):
+    """
+    The applications provides a status of connection to Red Hat services.
+    """
     assert not rhc.is_registered
     proc = rhc.run("status")
     logging.info(f'rhc status is: {proc.stdout}')

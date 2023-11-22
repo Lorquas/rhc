@@ -8,12 +8,21 @@ from functools import partial
 
 from pytest_client_tools import rhc
 
+"""
+Tests related to ingress service. The service provides information
+about every system that is connected to the account.
+"""
+
 
 def test_rhc_fetch_from_inventory(external_candlepin,
                                   test_config,
                                   fetch_from_inventory,
                                   subscription_manager,
                                   subtests):
+    """
+    rhc client can download inventory file from ingress service.
+    There are all important fields in the inventory file.
+    """
     assert not rhc.is_registered
     candlepin_config = partial(test_config.get, "candlepin")
     rhc.connect(
@@ -57,6 +66,11 @@ def test_rhc_fetch_from_inventory(external_candlepin,
 
 def test_rhc_tags_in_inventory(external_candlepin, test_config, fetch_from_inventory, fetch_tags_from_inventory, rhc,
                                set_rhc_tags, subtests):
+    """
+    There is a file 'tags.toml' in /etc/rhc/.
+    The file consist of tags that specify a connected system somehow.
+    An inventory file fetched from ingress service should consist of each specified tag.
+    """
     assert not rhc.is_registered
 
     test_tags = {"uptime": "99.999",
