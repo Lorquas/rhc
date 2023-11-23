@@ -1,6 +1,7 @@
 import logging
-from packaging import version
+from sh import rhc
 from functools import partial
+from packaging import version
 
 
 def test_version(rhc, subtests):
@@ -48,6 +49,7 @@ def test_rhc_connect_disconnect(external_candlepin, test_config, rhc, subtests):
 
     with subtests.test(msg="RHC disconnect"):
         proc = rhc.disconnect()
+
         proc_stdout = proc.stdout.decode()
         logging.info(f'result of disconnect task: {proc.stdout}')
         assert not rhc.is_registered
@@ -124,7 +126,7 @@ def test_rhc_connect_when_connected(any_candlepin, test_config, rhc, subtests):
         "No traceback appears in an application response"
 
 
-def test_rhc_status(rhc):
+def test_rhc_status(external_candlepin, rhc):
     """
     The applications provides a status of connection to Red Hat services.
     """
@@ -136,3 +138,24 @@ def test_rhc_status(rhc):
         "Application should inform about status of connection to Red Hat Subscription Management"
     assert "Not connected to Red Hat Insights" in decoded_stdout, \
         "Application should inform about status of connection to Red Hat Insights"
+
+
+def test_rhc_connect_with_activation_key(not_registered_system, settings):
+    """
+    User can connect a system to a service using activation key.
+    It is necessary to specify organization in this case.
+    """
+    status = not_registered_system
+    logging.info(f"status of registration: {status}")
+    logging.info(f"activation key is: {settings.candlepin.activation_key}")
+    out = rhc("connect",
+              "--activation-key", settings.get('candlepin.activation_key'),
+              "--organization", settings.get('candlepin.org')
+              )
+    logging.info(f'rhc connect response: {out}')
+    assert "Successfully connected to Red Hat!" in out, \
+        "Application should inform about connection to Red Hat Subscription Management"
+    assert "Connected to Red Hat Insights" in out, \
+        "Application should inform about connection to Red Hat Insights service"
+    assert "Activated the Remote Host Configuration daemon" in out, \
+        "Application should inform that RHCD service has been started"

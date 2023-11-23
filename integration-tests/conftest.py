@@ -18,16 +18,14 @@ def settings():
     )
 
 
-"""
-curl https://cert.console.redhat.com/api/inventory/v1/hosts?insights_id=<insights-client/machine_id> \
+@pytest.fixture(scope="session")
+def fetch_from_inventory(test_config):
+    """
+    curl https://cert.console.redhat.com/api/inventory/v1/hosts?insights_id=<insights-client/machine_id> \
       --cert /etc/pki/consumer/cert.pem \
       --key /etc/pki/consumer/key.pem \
       -k
-"""
-
-
-@pytest.fixture(scope="session")
-def fetch_from_inventory(test_config):
+    """
     def _wrapper(insights_id):
         hostname = test_config.get("console", "host")
         output = sh.curl(f'''https://{hostname}/api/inventory/v1/hosts?insights_id={insights_id}
@@ -91,3 +89,43 @@ def set_rhc_tags():
     else:
         if os.path.isfile(config_path):
             os.remove(config_path)
+
+
+@pytest.fixture
+def get_rhc_status():
+    """
+    (env) [root@jstavel-iqe-rhel93 csi-client-tools]# rhc status --format json
+    {
+        "hostname": "jstavel-iqe-rhel93",
+        "rhsm_connected": true,
+        "insights_connected": true,
+        "rhcd_running": true
+    }
+    """
+    def _wrapper():
+        status = json.loads(sh.rhc("status", "--format", "json"))
+        return status
+    return _wrapper
+
+
+@pytest.fixture
+def not_registered_system(get_rhc_status):
+    """
+    If a system is registered it runs 'rhc disconnect' command.
+    The fixture ensures that a system is not registered before a test is run.
+    """
+    rhc_status = get_rhc_status()
+    if rhc_status.get("rhsm_connected"):
+        sh.rhc("disconnect")
+    return get_rhc_status()
+
+
+@pytest.fixture
+def registered_system(get_rhc_status, settings):
+    rhc_status = get_rhc_status()
+    if rhc_status.get("rhsm_connected"):
+        return rhc_status
+    sh.rhc("connect",
+           "--username", settings.get("candlepin.username"),
+           "--password", settings.get("candlepin.password"))
+    return get_rhc_status()
