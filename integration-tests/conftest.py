@@ -117,7 +117,8 @@ def not_registered_system(get_rhc_status):
     rhc_status = get_rhc_status()
     if rhc_status.get("rhsm_connected"):
         sh.rhc("disconnect")
-    return get_rhc_status()
+        return get_rhc_status()
+    return rhc_status
 
 
 @pytest.fixture
