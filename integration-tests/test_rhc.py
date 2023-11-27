@@ -1,6 +1,7 @@
 import logging
 import sh
 from packaging import version
+import pytest
 
 
 def test_rhc_version(subtests):
@@ -121,6 +122,7 @@ def test_rhc_status(not_registered_system):
         "Application should inform about status of connection to Red Hat Insights"
 
 
+@pytest.mark.env('stage')
 def test_rhc_connect_with_activation_key(not_registered_system, settings):
     """
     User can connect a system to a service using activation key.

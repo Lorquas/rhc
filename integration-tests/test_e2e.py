@@ -3,6 +3,7 @@ import re
 import sh
 import os
 import funcy
+import pytest
 
 """
 Tests related to ingress service. The service provides information
@@ -10,6 +11,7 @@ about every system that is connected to the account.
 """
 
 
+@pytest.mark.env('stage')
 def test_rhc_fetch_from_inventory(not_registered_system,
                                   settings,
                                   get_rhc_status,
@@ -58,6 +60,7 @@ def test_rhc_fetch_from_inventory(not_registered_system,
             "Organization ID in an inventory record should be the same as 'subscription-manager identity' provides"
 
 
+@pytest.mark.env('stage')
 def test_rhc_tags_in_inventory(not_registered_system,
                                settings,
                                fetch_from_inventory,
