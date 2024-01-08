@@ -49,9 +49,9 @@ def test_rhc_connect_disconnect(external_candlepin, test_config, rhc, subtests):
         proc_stdout = proc.stdout.decode()
         logging.info(f'result of disconnect task: {proc.stdout}')
         assert not rhc.is_registered
-        assert "Disconnected from Red Hat Subsription Management", \
+        assert "Disconnected from Red Hat Subsription Management" in proc_stdout, \
             "The application should inform a system is disconnected from Red Hat Subscription Management"
-        assert "Disconnected from Red Hat Insights", \
+        assert "Disconnected from Red Hat Insights" in proc_stdout, \
             "The application should inform a system is disconnected from Red Hat Insights"
 
 
