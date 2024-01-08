@@ -3,24 +3,29 @@ import re
 import sh
 import os
 import funcy
+import pytest
 
-from functools import partial
+"""
+Tests related to ingress service. The service provides information
+about every system that is connected to the account.
+"""
 
-from pytest_client_tools import rhc
 
-
-def test_rhc_fetch_from_inventory(external_candlepin,
-                                  test_config,
+@pytest.mark.env('stage')
+def test_rhc_fetch_from_inventory(not_registered_system,
+                                  settings,
+                                  get_rhc_status,
                                   fetch_from_inventory,
-                                  subscription_manager,
                                   subtests):
-    assert not rhc.is_registered
-    candlepin_config = partial(test_config.get, "candlepin")
-    rhc.connect(
-        username=candlepin_config("username"),
-        password=candlepin_config("password"),
-    )
-    assert rhc.is_registered
+    """
+    rhc client can download inventory file from ingress service.
+    There are all important fields in the inventory file.
+    """
+    sh.rhc('connect',
+           '--username', settings.get("candlepin.username"),
+           '--password', settings.get("candlepin.password"),
+           )
+    assert get_rhc_status().get('rhsm_connected')
 
     machine_id = open("/etc/insights-client/machine-id", "rt").read().strip()
     data = fetch_from_inventory(insights_id=machine_id)
@@ -40,7 +45,7 @@ def test_rhc_fetch_from_inventory(external_candlepin,
     org name: 16769664
     org ID: 16769664
     """
-    output = subscription_manager("identity")
+    output = sh.subscription_manager("identity")
 
     def parse_output(output):
         data = dict([re.split(r': +', line)
@@ -55,20 +60,28 @@ def test_rhc_fetch_from_inventory(external_candlepin,
             "Organization ID in an inventory record should be the same as 'subscription-manager identity' provides"
 
 
-def test_rhc_tags_in_inventory(external_candlepin, test_config, fetch_from_inventory, fetch_tags_from_inventory, rhc,
-                               set_rhc_tags, subtests):
-    assert not rhc.is_registered
-
+@pytest.mark.env('stage')
+def test_rhc_tags_in_inventory(not_registered_system,
+                               settings,
+                               fetch_from_inventory,
+                               fetch_tags_from_inventory,
+                               set_rhc_tags,
+                               get_rhc_status,
+                               subtests):
+    """
+    There is a file 'tags.toml' in /etc/rhc/.
+    The file consist of tags that specify a connected system somehow.
+    An inventory file fetched from ingress service should consist of each specified tag.
+    """
     test_tags = {"uptime": "99.999",
                  "production": "true", "region": "us-east-1"}
     set_rhc_tags(test_tags)
 
-    candlepin_config = partial(test_config.get, "candlepin")
-    rhc.connect(
-        username=candlepin_config("username"),
-        password=candlepin_config("password"),
-    )
-    assert rhc.is_registered
+    sh.rhc('connect',
+           '--username', settings.get("candlepin.username"),
+           '--password', settings.get("candlepin.password"),
+           )
+    assert get_rhc_status().get("rhsm_connected")
     assert 'This host is registered' in sh.insights_client("--status"), \
         "A system should be registered to Insights service after 'rhc connect'"
 

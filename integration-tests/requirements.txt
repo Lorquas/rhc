@@ -3,8 +3,7 @@ jmespath
 sh
 toml
 funcy
-
+attr
 pytest
 packaging
-
-git+https://github.com/ptoscano/pytest-client-tools@main
+pre-commit

@@ -5,17 +5,57 @@ import json
 import os
 import toml
 import shutil
+from dynaconf import Dynaconf
 
-"""
-curl https://cert.console.redhat.com/api/inventory/v1/hosts?insights_id=<insights-client/machine_id> \
-      --cert /etc/pki/consumer/cert.pem \
-      --key /etc/pki/consumer/key.pem \
-      -k
-"""
+
+_settings = Dynaconf(
+    envvar_prefix="CSI_CLIENT_TOOLS",
+    settings_files=["settings.toml", ".secrets.yaml"],
+    environments=True,
+    load_dotenv=True,
+)
+
+
+@pytest.fixture
+def settings():
+    return _settings
+
+#
+# a marker 'env' defines a dynaconf environment that a test requires
+# the marker can be used more times
+#
+# see https://www.dynaconf.com/configuration/#env
+#     https://www.dynaconf.com/configuration/#environments
+#     https://www.dynaconf.com/settings_files/#layered-environments-on-files
+# to understand how environments are used in the tests.
+#
+# https://docs.pytest.org/en/7.1.x/example/markers.html
+
+
+def pytest_configure(config):
+    # register an additional marker
+    config.addinivalue_line(
+        "markers", "env(name): mark test to run only in the proper environment (it is a Dynaconf feature)"
+    )
+
+
+def pytest_runtest_setup(item):
+    envnames = [mark.args[0] for mark in item.iter_markers(name="env")]
+    the_environment = _settings.get('env_for_dynaconf') or "development"
+    if envnames:
+        if the_environment not in envnames:
+            pytest.skip(
+                f"test requires a dynaconf environment to be one of those: {envnames}")
 
 
 @pytest.fixture(scope="session")
 def fetch_from_inventory(test_config):
+    """
+    curl https://cert.console.redhat.com/api/inventory/v1/hosts?insights_id=<insights-client/machine_id> \
+      --cert /etc/pki/consumer/cert.pem \
+      --key /etc/pki/consumer/key.pem \
+      -k
+    """
     def _wrapper(insights_id):
         hostname = test_config.get("console", "host")
         output = sh.curl(f'''https://{hostname}/api/inventory/v1/hosts?insights_id={insights_id}
@@ -61,6 +101,7 @@ def set_rhc_tags():
 
     def _wrapper(tags: dict):
         # save the original file before
+        global the_config_file_exists
         if os.path.isfile(config_path):
             logging.info(
                 f'{config_path} exists. saved to a file {backup_path}')
@@ -78,3 +119,44 @@ def set_rhc_tags():
     else:
         if os.path.isfile(config_path):
             os.remove(config_path)
+
+
+@pytest.fixture
+def get_rhc_status():
+    """
+    (env) [root@jstavel-iqe-rhel93 csi-client-tools]# rhc status --format json
+    {
+        "hostname": "jstavel-iqe-rhel93",
+        "rhsm_connected": true,
+        "insights_connected": true,
+        "rhcd_running": true
+    }
+    """
+    def _wrapper():
+        status = json.loads(sh.rhc("status", "--format", "json"))
+        return status
+    return _wrapper
+
+
+@pytest.fixture
+def not_registered_system(get_rhc_status):
+    """
+    If a system is registered it runs 'rhc disconnect' command.
+    The fixture ensures that a system is not registered before a test is run.
+    """
+    rhc_status = get_rhc_status()
+    if rhc_status.get("rhsm_connected"):
+        sh.rhc("disconnect")
+        return get_rhc_status()
+    return rhc_status
+
+
+@pytest.fixture
+def registered_system(get_rhc_status, settings):
+    rhc_status = get_rhc_status()
+    if rhc_status.get("rhsm_connected"):
+        return rhc_status
+    sh.rhc("connect",
+           "--username", settings.get("candlepin.username"),
+           "--password", settings.get("candlepin.password"))
+    return get_rhc_status()
