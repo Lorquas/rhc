@@ -5,20 +5,6 @@ import json
 import os
 import toml
 import shutil
-from dynaconf import Dynaconf
-
-
-_settings = Dynaconf(
-    envvar_prefix="CSI_CLIENT_TOOLS",
-    settings_files=["settings.toml", ".secrets.yaml"],
-    environments=True,
-    load_dotenv=True,
-)
-
-
-@pytest.fixture
-def settings():
-    return _settings
 
 #
 # a marker 'env' defines a dynaconf environment that a test requires
@@ -30,22 +16,6 @@ def settings():
 # to understand how environments are used in the tests.
 #
 # https://docs.pytest.org/en/7.1.x/example/markers.html
-
-
-def pytest_configure(config):
-    # register an additional marker
-    config.addinivalue_line(
-        "markers", "env(name): mark test to run only in the proper environment (it is a Dynaconf feature)"
-    )
-
-
-def pytest_runtest_setup(item):
-    envnames = [mark.args[0] for mark in item.iter_markers(name="env")]
-    the_environment = _settings.get('env_for_dynaconf') or "development"
-    if envnames:
-        if the_environment not in envnames:
-            pytest.skip(
-                f"test requires a dynaconf environment to be one of those: {envnames}")
 
 
 @pytest.fixture(scope="session")
@@ -80,15 +50,6 @@ def fetch_tags_from_inventory(test_config):
         # logger.info(f"Fetching host tags from inventory. Url: {url} - params: {params}")
         data = json.loads(response)
         return data
-
-    yield _wrapper
-
-
-@pytest.fixture
-def subscription_manager():
-    def _wrapper(*args):
-        output = sh.subscription_manager(*args)
-        return output
 
     yield _wrapper
 
