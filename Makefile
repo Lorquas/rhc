@@ -42,7 +42,7 @@ DESTDIR       ?=
 SYSTEMD_SYSTEM_UNIT_DIR  := $(shell pkg-config --variable systemdsystemunitdir systemd)
 
 # Build flags
-LDFLAGS := 
+LDFLAGS :=
 LDFLAGS += -X 'main.Version=$(VERSION)'
 LDFLAGS += -X 'main.ShortName=$(SHORTNAME)'
 LDFLAGS += -X 'main.LongName=$(LONGNAME)'

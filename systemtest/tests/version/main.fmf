@@ -1,0 +1,3 @@
+summary: Runs rhc --version
+test: ./test.sh
+duration: 1m

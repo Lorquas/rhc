@@ -1,0 +1,10 @@
+pytest-subtests
+jmespath
+sh
+toml
+funcy
+attr
+pytest
+packaging
+pre-commit
+git+https://github.com/jstavel/pytest-client-tools@jstavel/dynaconf_fixture

@@ -20,12 +20,15 @@ Source2: https://github.com/RedHatInsights/yggdrasil-worker-package-manager/rele
 
 ExclusiveArch: %{go_arches}
 
+%if %{defined rhel} && %{undefined centos}
 Requires:      insights-client
+%endif
 
-BuildRequires: git
+#BuildRequires: git
 BuildRequires: golang
 BuildRequires: dbus-devel
 BuildRequires: systemd-devel
+BuildRequires: systemd
 
 
 %description
@@ -56,7 +59,7 @@ make PREFIX=%{_prefix} \
 cd %{_builddir}/%{name}/yggdrasil-worker-package-manager
 go build -o rhc-package-manager-worker -mod=vendor .
 
-cd %{_builddir}/%{name}/%{name}-%{version}-@RELEASE@
+cd %{_builddir}/%{name}-%{version}-@RELEASE@/%{name}-%{version}-@RELEASE@
 make PREFIX=%{_prefix} \
      SYSCONFDIR=%{_sysconfdir} \
      LOCALSTATEDIR=%{_localstatedir} \
@@ -90,7 +93,7 @@ cd %{_builddir}/%{name}/yggdrasil-worker-package-manager
 install -D -m 755 rhc-package-manager-worker %{buildroot}%{_libexecdir}/@LONGNAME@/
 install -D -m 644 config.toml %{buildroot}%{_sysconfdir}/@LONGNAME@/workers/rhc-package-manager.toml
 
-cd %{_builddir}/%{name}/%{name}-%{version}-@RELEASE@
+cd %{_builddir}/%{name}-%{version}-@RELEASE@/%{name}-%{version}-@RELEASE@
 make PREFIX=%{_prefix} \
      SYSCONFDIR=%{_sysconfdir} \
      LOCALSTATEDIR=%{_localstatedir} \
@@ -106,7 +109,7 @@ make PREFIX=%{_prefix} \
      install
 
 %files
-%doc %{name}-%{version}-@RELEASE@/README.md
+#%doc %{name}-%{version}-@RELEASE@/README.md
 %{_bindir}/@SHORTNAME@
 %{_sbindir}/@SHORTNAME@d
 %{_sysconfdir}/@LONGNAME@/

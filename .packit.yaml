@@ -1,0 +1,51 @@
+---
+# Default packit instance is a prod and only this is used
+# stg instance is present for testing new packit features
+# in forked repositories where stg is installed.
+packit_instances: ["prod"]
+upstream_project_url: https://github.com/Lorquas/rhc
+specfile_path: rhc.spec
+srpm_build_deps:
+  - git-core
+  - golang
+  - make
+
+actions:
+  post-upstream-clone:
+    - bash -c "make -f .copr/Makefile tarball SHORTNAME=rhc"
+  create-archive:
+    - bash -c "ls -1t ./rhc*.tar.gz | head -n 1"
+
+# issue_repository: https://github.com/strimzi/strimzi-kafka-operator
+jobs:
+  - job: copr_build
+    trigger: pull_request
+    targets:
+      - centos-stream-9-x86_64
+      # - fedora-latest-stable
+
+  - job: tests
+    trigger: pull_request
+    # Suffix for job name
+    identifier: "unit"
+    targets:
+      # https://packit.dev/docs/configuration/#aliases
+      - centos-stream-9-x86_64
+      # - fedora-latest-stable
+    # manual_trigger: true
+    labels:
+      - unit
+
+#  - job: tests
+#    trigger: pull_request
+#    # Suffix for job name
+#    identifier: "unit"
+#    use_internal_tf: True
+#    # http://storage.tft.osci.redhat.com/composes-production.html
+#    targets:
+#      centos-stream-9-x86_64:
+#        distros: [RHEL-9.3.0-Nightly]
+#      centos-stream-8-x86_64:
+#        distros: [RHEL-8-Updated]
+#    labels:
+#      - unit
